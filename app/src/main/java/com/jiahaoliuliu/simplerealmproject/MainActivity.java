@@ -13,6 +13,10 @@ import io.realm.OrderedRealmCollectionChangeListener;
 import io.realm.Realm;
 import io.realm.RealmResults;
 
+/**
+ * Following this tutorial
+ * https://realm.io/docs/java/3.5.0/
+ */
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "SimpleRealmProject";
@@ -65,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
     private void persistTheData() {
         realm.beginTransaction();
         managedDog = realm.copyToRealm(dog); // Persist unmanaged objects
-        person = realm.createObject(Person.class); // Create managed objects directly
+        person = realm.createObject(Person.class, "1"); // Create managed objects directly
         person.getDogs().add(managedDog);
         realm.commitTransaction();
     }

@@ -2,11 +2,13 @@ package com.jiahaoliuliu.simplerealmproject.model;
 
 import io.realm.RealmList;
 import io.realm.RealmObject;
+import io.realm.annotations.PrimaryKey;
 
 /**
  * Created by jiahaoliu on 11/5/17.
  */
 public class Person extends RealmObject {
+    @PrimaryKey
     private long id;
     private String name;
     private RealmList<Dog> dogs;
