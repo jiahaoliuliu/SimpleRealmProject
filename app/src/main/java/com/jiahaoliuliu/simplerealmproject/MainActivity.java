@@ -8,9 +8,13 @@ import android.util.Log;
 import com.jiahaoliuliu.simplerealmproject.model.Dog;
 import com.jiahaoliuliu.simplerealmproject.model.Person;
 
+import io.realm.DynamicRealm;
 import io.realm.OrderedCollectionChangeSet;
 import io.realm.OrderedRealmCollectionChangeListener;
 import io.realm.Realm;
+import io.realm.RealmConfiguration;
+import io.realm.RealmMigration;
+import io.realm.RealmObjectSchema;
 import io.realm.RealmResults;
 
 /**
@@ -20,6 +24,7 @@ import io.realm.RealmResults;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "SimpleRealmProject";
+    private static final int SCHEMA_VERSION = 2;
 
     private Context context;
 
@@ -57,6 +62,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void initRealm() {
         Realm.init(context);
+        RealmConfiguration configuration = new RealmConfiguration.Builder()
+                .schemaVersion(SCHEMA_VERSION)
+                .migration(new MyMigration())
+                .build();
+        Realm.setDefaultConfiguration(configuration);
         realm = Realm.getDefaultInstance();
     }
 
@@ -69,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
     private void persistTheData() {
         realm.beginTransaction();
         managedDog = realm.copyToRealm(dog); // Persist unmanaged objects
-        person = realm.createObject(Person.class, "1"); // Create managed objects directly
+        person = realm.createObject(Person.class, SCHEMA_VERSION); // Create managed objects directly
         person.getDogs().add(managedDog);
         realm.commitTransaction();
     }
@@ -101,5 +111,31 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "The managed dog age is " + managedDog.getAge());
             }
         });
+    }
+
+    public class MyMigration implements RealmMigration {
+
+        @Override
+        public void migrate(DynamicRealm realm, long oldVersion, long newVersion) {
+            Log.d(TAG,"Migration called with dynamic Realm: " + realm + ", old version: " + oldVersion
+                + ", new version: " + newVersion);
+
+            if (oldVersion < 2) {
+                migrateToVersion2(realm);
+            }
+        }
+
+        private void migrateToVersion2(DynamicRealm realm) {
+            RealmObjectSchema personSchema = realm.getSchema().get(Person.class.getSimpleName());
+            addFieldIfNotExist(personSchema, "age", int.class);
+            addFieldIfNotExist(personSchema, "isMan", boolean.class);
+            Log.v(TAG, "Realm migrated to version 2");
+        }
+    }
+
+    private void addFieldIfNotExist(RealmObjectSchema realmObjectSchema, String fieldName, Class<?> fieldType) {
+        if (!realmObjectSchema.hasField(fieldName)) {
+            realmObjectSchema.addField(fieldName, fieldType);
+        }
     }
 }
